@@ -44,10 +44,14 @@ except:
 
 
 app = FastAPI(title="Insighta Labs+ Portal", version="2.0.0")
-templates = Jinja2Templates(directory="templates")
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 30
+@app.get("/")
+def home(request: Request):
+    return {"status": "ok", "message": "Insighta Labs+ Web Portal"}
+
+@app.get("/test")
+def test(request: Request):
+    return {"status": "ok", "test": "success"}
 CSRF_TOKEN_COOKIE = "csrf_token"
 SESSION_COOKIE = "session"
 
