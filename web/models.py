@@ -8,6 +8,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, ForeignKey
 
+def generate_id():
+    return secrets.token_urlsafe(16)
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, ForeignKey
+
 DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or ""
 
 if not DATABASE_URL:
