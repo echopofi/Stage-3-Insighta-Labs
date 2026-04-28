@@ -236,14 +236,11 @@ def health_check():
 
 # Root-level auth routes for grader compatibility
 @app.get("/auth/github/login")
-def github_login_root(
-    request: Request,
-    redirect_uri: Optional[str] = Query(None)
-):
-    return github_login(request, redirect_uri)
+def github_login_root(request: Request):
+    return github_login(request, None)
 
 
-@app.get("/auth/github/callback")
+@app.post("/auth/github/callback")
 def github_callback_root(
     request: Request,
     code: str = Query(...),
@@ -252,14 +249,14 @@ def github_callback_root(
     return github_callback(request, code, state)
 
 
-@app.get("/auth/refresh")
-def refresh_root(request: Request, refresh_token: Optional[str] = Query(None)):
-    return refresh_access_token(request, refresh_token)
+@app.post("/auth/refresh")
+def refresh_root(request: Request):
+    return refresh_access_token(request, None)
 
 
 @app.post("/auth/logout")
-def logout_root(request: Request, refresh_token: Optional[str] = Query(None)):
-    return logout(request, refresh_token)
+def logout_root(request: Request):
+    return logout(request, None)
 
 
 @app.get("/auth/me")
