@@ -660,7 +660,7 @@ def profile_root(
 
 
 @app.post("/profiles")
-def create_profile_root(
+async def create_profile_root(
     request: dict,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin"))
