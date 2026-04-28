@@ -27,7 +27,8 @@ import httpx
 
 
 app = FastAPI(title="Insighta Labs+ Portal", version="2.0.0")
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+templates_dir = os.path.join(os.path.dirname(__file__), "templates")
+templates = Jinja2Templates(directory=templates_dir)
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 30
