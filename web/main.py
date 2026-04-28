@@ -466,3 +466,7 @@ def admin_page(request: Request, user: User = Depends(get_current_user)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=3000)
+
+
+def handler(request):
+    return app(request)
