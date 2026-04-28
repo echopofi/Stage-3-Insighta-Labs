@@ -92,8 +92,7 @@ def test():
 
 @app.get("/")
 def home(request: Request):
-    user = get_current_user(request)
-    return templates.TemplateResponse("index.html", {"request": request, "user": user})
+    return {"status": "ok", "message": "Insighta Labs+ Web Portal"}
 
 
 @app.get("/login")
