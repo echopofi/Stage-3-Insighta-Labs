@@ -136,3 +136,95 @@ def dashboard(request: Request):
     if not user:
         return RedirectResponse(url="/login")
     return templates.TemplateResponse(request, "dashboard.html", {"request": request, "user": user})
+
+
+@app.get("/profiles")
+def profiles_page(request: Request, page: int = Query(1), limit: int = Query(10)):
+    import httpx
+    
+    user = get_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    try:
+        response = httpx.get(
+            f"{BACKEND_URL}/api/v1/profiles",
+            params={"page": page, "limit": min(limit, 50)},
+            timeout=10
+        )
+        data = response.json() if response.status_code == 200 else {}
+    except:
+        data = {"data": [], "total": 0}
+    
+    profiles = data.get("data", []) if data.get("status") == "success" else []
+    total = data.get("total", 0)
+    total_pages = data.get("total_pages", 1)
+    
+    return templates.TemplateResponse(request, "profiles.html", {
+        "request": request, 
+        "user": user,
+        "profiles": profiles,
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "total_pages": total_pages,
+        "filters": {}
+    })
+
+
+@app.get("/profiles/search")
+def search_page(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    return templates.TemplateResponse(request, "search.html", {"request": request, "user": user})
+
+
+@app.post("/api/search")
+def api_search(request: Request, q: str = Form(...), page: int = Form(1), limit: int = Form(10)):
+    import httpx
+    
+    csrf_token = request.cookies.get(CSRF_TOKEN_COOKIE)
+    form_csrf = request.form.get("csrf_token")
+    
+    if csrf_token != form_csrf:
+        return JSONResponse(status_code=403, content={"status": "error", "message": "CSRF validation failed"})
+    
+    try:
+        response = httpx.get(
+            f"{BACKEND_URL}/api/v1/profiles/search",
+            params={"q": q, "page": page, "limit": limit},
+            timeout=10
+        )
+        return JSONResponse(content=response.json() if response.status_code == 200 else {"status": "error"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@app.get("/export")
+def export_page(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    return templates.TemplateResponse(request, "export.html", {"request": request, "user": user})
+
+
+@app.post("/api/export")
+def api_export(request: Request):
+    import httpx
+    
+    try:
+        response = httpx.get(f"{BACKEND_URL}/api/v1/profiles/export", timeout=30)
+        
+        if response.status_code == 200:
+            from fastapi.responses import StreamingResponse
+            return StreamingResponse(
+                iter([response.text]),
+                media_type="text/csv",
+                headers={"Content-Disposition": "attachment; filename=profiles_export.csv"}
+            )
+    
+    except:
+        pass
+    
+    return JSONResponse(status_code=500, content={"status": "error"})
