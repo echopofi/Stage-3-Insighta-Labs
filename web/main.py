@@ -18,16 +18,12 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
-import models
-from models import SessionLocal, User, RefreshToken, OAuthState, Profile, RequestLog
-import services
-import httpx
-
 
 app = FastAPI(title="Insighta Labs+ Portal", version="2.0.0")
-templates = Jinja2Templates(directory="templates", autoescape=True)
+
+@app.get("/")
+def home(request: Request):
+    return {"status": "ok", "message": "Insighta Labs+ Web Portal"}
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 30
