@@ -2,11 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pip install -r requirements.txt",
   "outputDirectory": ".",
-  "framework": "fastapi",
+  "framework": "python",
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/main.py"
+      "dest": "/main:app"
     }
   ]
 }

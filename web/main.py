@@ -11,7 +11,10 @@ from functools import wraps
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR / ".env")
+try:
+    load_dotenv(BASE_DIR / ".env")
+except:
+    pass
 
 from fastapi import FastAPI, Request, HTTPException, Query, Header, Form, Cookie
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -35,13 +38,14 @@ GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "placeholderclientsecre
 GITHUB_CALLBACK_URI = os.getenv("GITHUB_CALLBACK_URI", "http://localhost:3000/github/callback")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
+app = FastAPI(title="Insighta Labs+ Portal", version="2.0.0")
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@app.get("/")
+def home(request: Request):
+    return {"status": "ok", "message": "Insighta Labs+ Web Portal"}
+
+
+# Don't import anything else that might fail
 
 
 def generate_csrf_token() -> str:
