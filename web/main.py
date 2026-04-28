@@ -37,7 +37,7 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 def home(request: Request):
     try:
         if templates:
-            return templates.TemplateResponse("index.html", context={"request": request})
+            return templates.TemplateResponse(request, "index.html")
     except Exception as e:
         return {"status": "error", "message": str(e), "templates_loaded": True}
     return {"status": "ok", "message": "Home"}
