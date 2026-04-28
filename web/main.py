@@ -35,9 +35,12 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 @app.get("/")
 def home(request: Request):
-    if templates:
-        return templates.TemplateResponse("index.html", {"request": request, "user": None})
-    return {"status": "ok", "message": "Home - templates not loaded"}
+    try:
+        if templates:
+            return templates.TemplateResponse("index.html", {"request": request, "user": None})
+    except Exception as e:
+        return {"status": "error", "message": str(e), "templates_loaded": True}
+    return {"status": "ok", "message": "Home"}
 
 
 @app.get("/test")
