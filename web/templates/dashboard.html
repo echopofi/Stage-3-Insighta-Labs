@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Insighta Labs+</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; }
+        nav { background: #1a1a2e; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        nav .logo { color: #fff; font-size: 1.5rem; font-weight: bold; }
+        nav ul { display: flex; gap: 1.5rem; list-style: none; }
+        nav a { color: #fff; text-decoration: none; }
+        nav a:hover { color: #00d4ff; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        h1 { color: #1a1a2e; margin-bottom: 0.5rem; }
+        .subtitle { color: #666; margin-bottom: 2rem; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .card { background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card h3 { color: #666; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .card .value { font-size: 2rem; font-weight: bold; color: #1a1a2e; }
+        .card a { display: inline-block; margin-top: 1rem; color: #00d4ff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Insighta Labs+</div>
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/profiles">Profiles</a></li>
+            <li><a href="/profiles/search">Search</a></li>
+            <li><a href="/export">Export</a></li>
+            {% if user.role == 'admin' %}
+            <li><a href="/admin">Admin</a></li>
+            {% endif %}
+            <li><span>{{ user.username }} ({{ user.role }})</span></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1>Welcome, {{ user.username }}!</h1>
+        <p class="subtitle">Your role: {{ user.role }}</p>
+        
+        <div class="cards">
+            <div class="card">
+                <h3>Your Role</h3>
+                <div class="value">{{ user.role }}</div>
+                <p>{% if user.role == 'admin' %}Full system access{% else %}Analyst access{% endif %}</p>
+            </div>
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <a href="/profiles">View Profiles →</a><br>
+                <a href="/profiles/search">Search Profiles →</a><br>
+                <a href="/export">Export to CSV →</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

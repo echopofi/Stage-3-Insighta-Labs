@@ -1,0 +1,261 @@
+================================================================================
+                    INSIGHTA LABS+ - STAGE 3 TASK REPORT
+================================================================================
+
+PROJECT: Build Insighta Labs+ - Secure Access & Multi-Interface Integration
+DATE: April 28, 2026
+GRADE TARGET: 75/100
+
+================================================================================
+                              SYSTEM OVERVIEW
+================================================================================
+
+Insighta Labs+ is a secure, multi-interface Profile Intelligence System that extends
+the Stage 2 Profile Intelligence System with:
+
+1. Authentication via GitHub OAuth with PKCE
+2. Role-based access control (admin/analyst)
+3. Token management (access + refresh tokens)
+4. API versioning (/api/v1/)
+5. CSV profile export
+6. CLI tool with credential storage
+7. Web portal with HTTP-only cookies + CSRF protection
+8. Rate limiting (100 req/min)
+9. Request logging
+
+================================================================================
+                         WHAT THE SYSTEM DOES
+================================================================================
+
+1. AUTHENTICATION
+   - GitHub OAuth 2.0 with PKCE (Proof Key for Code Exchange)
+   - Code verifier/challenge generated on login initiation
+   - Access token (15 min expiry) + refresh token (30 day expiry)
+   - Automatic token refresh on expiry
+
+2. AUTHORIZATION
+   - Two roles: admin and analyst
+   - admin: Full access including user management and logs
+   - analyst: Read profiles, search, export CSV
+   - All endpoints enforce role checks
+
+3. PROFILE MANAGEMENT (from Stage 2)
+   - Create, read, delete profiles
+   - Filtering by gender, country, age group, age range
+   - Sorting by age, created_at, gender_probability
+   - Pagination with total/total_pages
+
+4. NATURAL LANGUAGE SEARCH
+   - Query parse: "males from Nigeria over 25"
+   - Supports countries, genders, age groups, age thresholds
+   - Keyword validation with 400 error for invalid queries
+
+5. CSV EXPORT
+   - Export profiles filtered by any criteria
+   - Downloads as CSV file
+
+6. CLI TOOL
+   - Globally installable via pip
+   - Credentials stored in ~/.insighta/credentials.json
+   - Commands: login, logout, profiles list/search/export, admin
+
+7. WEB PORTAL
+   - HTTP-only cookies for session (15 min)
+   - CSRF token protection on forms
+   - Pages: Home, Login, Dashboard, Profiles, Search, Export, Admin
+
+8. RATE LIMITING
+   - 100 requests per minute per IP
+   - Returns 429 when exceeded
+
+9. REQUEST LOGGING
+   - All requests logged to database
+   - Admin can view via /api/v1/admin/logs
+
+================================================================================
+                           ARCHITECTURE
+================================================================================
+
+                    ┌─────────────────────────────────────┐
+                    │         BACKEND (FastAPI)            │
+                    │  Port: 8000                      │
+                    │  /api/v1/*                       │
+                    └───────────┬─────────────────────┘
+                                │
+        ┌───────────────────────────┼───────────────────────────┐
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+│  CLI Tool    │     │ Web Portal   │     │   SQLite      │
+│  Python     │     │  FastAPI    │     │  Database     │
+│  Click      │     │  Jinja2     │     │  profiles.db   │
+└───────────────┘     └───────────────┘     └───────────────┘
+
+================================================================================
+                       AUTHENTICATION FLOW
+================================================================================
+
+CLI/Web                          Backend                        GitHub
+   │                               │                             │
+   ├─── GET /github/login ────────▶│                             │
+   │◀── auth_url + state ───────────│                             │
+   │                               │                             │
+   │─── redirect to GitHub ──────────────────────────────────▶│
+   │                               │                             │
+   │◀─── authorization_code ───────────────────────────────────│
+   │                               │                             │
+   │─── code + state ──────────────▶│                             │
+   │                               │                             │
+   │                         ┌────┼────────────────────▶ GitHub API
+   │                         │    │    (exchange for token)      │
+   │                         │◀───┘                         │
+   │                         │                              │
+   │◀── access_token + refresh_token ───────────────────────────│
+   │                               │                             │
+   │─── API requests ───────────────▶│                             │
+   │◀── JSON response ────────────│                             │
+   │                               │                             │
+
+================================================================================
+                         TOKEN HANDLING APPROACH
+================================================================================
+
+ACCESS TOKEN:
+- JWT-like structure (not cryptographically signed for simplicity)
+- Contains: user_id, username, role, expiry
+- 15-minute expiry
+- Sent in Authorization: Bearer <token> header
+
+REFRESH TOKEN:
+- 30-day expiry
+- Stored in database (RefreshToken model)
+- Revoked on use and replaced
+- Can be stored in HTTP-only cookie (web) or file (CLI)
+
+AUTOMATIC REFRESH:
+- CLI checks token expiry before each request
+- Automatically refreshes if expired
+- On failure, clears credentials
+
+================================================================================
+                      ROLE ENFORCEMENT LOGIC
+================================================================================
+
+DEPENDENCY CHAIN:
+1. get_current_user() - Extracts token from header/cookie
+2. Validates token and fetches user from database
+3. require_role("admin") - Checks user.role == "admin"
+
+ENDPOINT PERMISSIONS:
+- GET /api/v1/profiles - analyst+
+- GET /api/v1/profiles/{id} - analyst+
+- GET /api/v1/profiles/export - analyst+
+- POST /api/v1/profiles - admin only
+- DELETE /api/v1/profiles/{id} - admin only
+- GET /api/v1/admin/users - admin only
+- GET /api/v1/admin/logs - admin only
+- PUT /api/v1/users/{id}/role - admin only
+
+================================================================================
+                  NATURAL LANGUAGE PARSING APPROACH
+================================================================================
+
+INPUT: "males from Nigeria over 25"
+
+PROCESSING:
+1. Lowercase and tokenize
+2. Match keywords:
+   - "males" → gender: male
+   - "Nigeria" → country_id: NG
+   - "over 25" → min_age: 25
+
+3. Extract age_group: "young" → min_age=16, max_age=24
+
+4. Validate against COUNTRY_MAP and allowed keywords
+
+5. Build SQLAlchemy filters:
+   - Profile.gender == "male"
+   - Profile.country_id == "NG"
+   - Profile.age >= 25
+
+OUTPUT: Filtered profiles
+
+SUPPORTED QUERIES:
+- "males from <country>"
+- "females from <country>"
+- "<age_group> from <country>"
+- "above <age>"
+- "below <age>"
+- "young" (16-24)
+
+================================================================================
+                            LIVE URLs
+================================================================================
+
+Backend:    http://localhost:8000
+Web Portal: http://localhost:3000
+
+================================================================================
+                           FILES STRUCTURE
+================================================================================
+
+/home/pofii/Desktop/HNG/task3/
+├── README.md              # Main documentation
+├── backend/
+│   ├── main.py          # FastAPI application
+│   ├── models.py         # SQLAlchemy models
+│   ├── services.py       # Business logic
+│   ├── requirements.txt
+│   └── README.md
+├── cli/
+│   ├── insighta_cli.py  # CLI tool
+│   ├── requirements.txt
+│   └── README.md
+└── web/
+    ├── main.py          # Web portal
+    ├── templates/*.html
+    ├── requirements.txt
+    └── README.md
+
+================================================================================
+                       RUNNING THE SYSTEM
+================================================================================
+
+BACKEND:
+  cd /home/pofii/Desktop/HNG/task3/backend
+  python3 main.py
+  # Runs on http://localhost:8000
+
+CLI:
+  cd /home/pofii/Desktop/HNG/task3/cli
+  python3 insighta_cli.py login
+  python3 insighta_cli.py list-profiles
+
+WEB:
+  cd /home/pofii/Desktop/HNG/task3/web
+  python3 main.py
+  # Runs on http://localhost:3000
+
+================================================================================
+                           CONCLUSION
+================================================================================
+
+The system implements all required features:
+
+✓ GitHub OAuth with PKCE (CLI + Web)
+✓ Access + refresh token management (15 min / 30 days)
+✓ Role-based access control (admin/analyst)
+✓ API versioning (/api/v1/)
+✓ Updated pagination (page, limit, total, total_pages)
+✓ CSV profile export
+✓ CLI tool with ~/.insighta/credentials.json
+✓ Web portal with HTTP-only cookies + CSRF
+✓ Rate limiting (100 req/min)
+✓ Request logging
+
+All Stage 2 functionality preserved:
+✓ Filtering, sorting, pagination
+✓ Natural language search
+✓ Profile CRUD
+
+================================================================================

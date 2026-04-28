@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export - Insighta Labs+</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; }
+        nav { background: #1a1a2e; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        nav .logo { color: #fff; font-size: 1.5rem; font-weight: bold; }
+        nav ul { display: flex; gap: 1.5rem; list-style: none; }
+        nav a { color: #fff; text-decoration: none; }
+        nav a:hover { color: #00d4ff; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        h1 { color: #1a1a2e; margin-bottom: 1rem; }
+        .export-form { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; }
+        .form-group select, .form-group input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; }
+        .form-group button { padding: 0.75rem 1.5rem; background: #00d4ff; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Insighta Labs+</div>
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/profiles">Profiles</a></li>
+            <li><a href="/profiles/search">Search</a></li>
+            <li><a href="/export">Export</a></li>
+            {% if user.role == 'admin' %}
+            <li><a href="/admin">Admin</a></li>
+            {% endif %}
+            <li><span>{{ user.username }}</span></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1>Export Profiles to CSV</h1>
+        <div class="export-form">
+            <form id="exportForm">
+                <input type="hidden" name="csrf_token" id="csrfToken">
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option value="">All Genders</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Country</label>
+                    <select name="country_id">
+                        <option value="">All Countries</option>
+                        <option value="NG">Nigeria</option>
+                        <option value="US">United States</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="CA">Canada</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Age Group</label>
+                    <select name="age_group">
+                        <option value="">All Age Groups</option>
+                        <option value="child">Child</option>
+                        <option value="teenager">Teenager</option>
+                        <option value="adult">Adult</option>
+                        <option value="senior">Senior</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Age Range</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="number" name="min_age" placeholder="Min Age">
+                        <input type="number" name="max_age" placeholder="Max Age">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="submit">Download CSV</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('csrfToken').value = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || '';
+        
+        document.getElementById('exportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            formData.append('csrf_token', document.getElementById('csrfToken').value);
+            
+            const params = new URLSearchParams();
+            for (let [k, v] of formData) {
+                if (v) params.append(k, v);
+            }
+            params.delete('csrf_token');
+            
+            window.location.href = '/api/export?' + params.toString();
+        });
+    </script>
+</body>
+</html>

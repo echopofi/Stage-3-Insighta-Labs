@@ -1,0 +1,9 @@
+.env
+*.db
+__pycache__/
+*.pyc
+profiles_export.csv
+*.egg-info/
+.eggs/
+venv/
+*.log

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profiles - Insighta Labs+</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; }
+        nav { background: #1a1a2e; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        nav .logo { color: #fff; font-size: 1.5rem; font-weight: bold; }
+        nav ul { display: flex; gap: 1.5rem; list-style: none; }
+        nav a { color: #fff; text-decoration: none; }
+        nav a:hover { color: #00d4ff; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        h1 { color: #1a1a2e; margin-bottom: 1rem; }
+        .filters { background: #fff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+        .filters select, .filters input { padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .filters button { padding: 0.5rem 1rem; background: #00d4ff; border: none; border-radius: 4px; cursor: pointer; }
+        .table-container { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f5f5f5; padding: 1rem; text-align: left; font-weight: 600; }
+        td { padding: 1rem; border-top: 1px solid #eee; }
+        tr:hover { background: #fafafa; }
+        .pagination { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
+        .pagination a { padding: 0.5rem 1rem; background: #fff; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #333; }
+        .pagination a:hover { background: #00d4ff; color: #fff; }
+        .stats { color: #666; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Insighta Labs+</div>
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/profiles">Profiles</a></li>
+            <li><a href="/profiles/search">Search</a></li>
+            <li><a href="/export">Export</a></li>
+            {% if user.role == 'admin' %}
+            <li><a href="/admin">Admin</a></li>
+            {% endif %}
+            <li><span>{{ user.username }}</span></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1>Profiles</h1>
+        <p class="stats">Total: {{ total }} | Page {{ page }} of {{ total_pages }}</p>
+        
+        <div class="filters">
+            <form method="get" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                <select name="gender">
+                    <option value="">All Genders</option>
+                    <option value="male" {% if filters.gender == 'male' %}selected{% endif %}>Male</option>
+                    <option value="female" {% if filters.gender == 'female' %}selected{% endif %}>Female</option>
+                </select>
+                <select name="country_id">
+                    <option value="">All Countries</option>
+                    <option value="NG" {% if filters.country_id == 'NG' %}selected{% endif %}>Nigeria</option>
+                    <option value="US" {% if filters.country_id == 'US' %}selected{% endif %}>United States</option>
+                    <option value="GB" {% if filters.country_id == 'GB' %}selected{% endif %}>United Kingdom</option>
+                    <option value="CA" {% if filters.country_id == 'CA' %}selected{% endif %}>Canada</option>
+                </select>
+                <select name="age_group">
+                    <option value="">All Age Groups</option>
+                    <option value="child" {% if filters.age_group == 'child' %}selected{% endif %}>Child</option>
+                    <option value="teenager" {% if filters.age_group == 'teenager' %}selected{% endif %}>Teenager</option>
+                    <option value="adult" {% if filters.age_group == 'adult' %}selected{% endif %}>Adult</option>
+                    <option value="senior" {% if filters.age_group == 'senior' %}selected{% endif %}>Senior</option>
+                </select>
+                <input type="number" name="min_age" placeholder="Min Age" value="{{ filters.min_age or '' }}" style="width: 80px;">
+                <input type="number" name="max_age" placeholder="Max Age" value="{{ filters.max_age or '' }}" style="width: 80px;">
+                <button type="submit">Apply</button>
+            </form>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Age</th>
+                        <th>Age Group</th>
+                        <th>Country</th>
+                        <th>Gender Prob.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in profiles %}
+                    <tr>
+                        <td>{{ profile.name }}</td>
+                        <td>{{ profile.gender }}</td>
+                        <td>{{ profile.age }}</td>
+                        <td>{{ profile.age_group }}</td>
+                        <td>{{ profile.country_name }}</td>
+                        <td>{{ profile.gender_probability }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="?page={{ page - 1 }}&limit={{ limit }}&gender={{ filters.gender or '' }}&country_id={{ filters.country_id or '' }}&age_group={{ filters.age_group or '' }}&min_age={{ filters.min_age or '' }}&max_age={{ filters.max_age or '' }}">Previous</a>
+            {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+            {% if p >= page - 2 and p <= page + 2 %}
+            <a href="?page={{ p }}&limit={{ limit }}&gender={{ filters.gender or '' }}&country_id={{ filters.country_id or '' }}&age_group={{ filters.age_group or '' }}&min_age={{ filters.min_age or '' }}&max_age={{ filters.max_age or '' }}">{{ p }}</a>
+            {% endif %}
+            {% endfor %}
+            {% if page < total_pages %}
+            <a href="?page={{ page + 1 }}&limit={{ limit }}&gender={{ filters.gender or '' }}&country_id={{ filters.country_id or '' }}&age_group={{ filters.age_group or '' }}&min_age={{ filters.min_age or '' }}&max_age={{ filters.max_age or '' }}">Next</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
