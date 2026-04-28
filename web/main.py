@@ -27,8 +27,7 @@ import httpx
 
 
 app = FastAPI(title="Insighta Labs+ Portal", version="2.0.0")
-templates_dir = os.path.join(os.path.dirname(__file__), "templates")
-templates = Jinja2Templates(directory=templates_dir)
+templates = Jinja2Templates(directory="templates", autoescape=True)
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 30
@@ -84,6 +83,11 @@ def require_role(required_role: str):
             raise HTTPException(status_code=403, detail={"status": "error", "message": "Insufficient permissions"})
         return user
     return role_checker
+
+
+@app.get("/test")
+def test():
+    return {"status": "ok", "message": "test endpoint"}
 
 
 @app.get("/")
