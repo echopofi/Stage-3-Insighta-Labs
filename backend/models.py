@@ -8,9 +8,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, ForeignKey
 
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or "sqlite:///./profiles.db"
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or ""
 
-if DATABASE_URL.startswith("postgres"):
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///./profiles.db"
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+elif DATABASE_URL.startswith("postgres"):
     engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_size=5)
 else:
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
