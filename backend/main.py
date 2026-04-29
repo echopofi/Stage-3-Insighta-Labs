@@ -316,6 +316,7 @@ def github_login(
     return {
         "status": "success",
         "authorization_url": github_auth_url,
+        "code_verifier": code_verifier,
         "state": state
     }
 
