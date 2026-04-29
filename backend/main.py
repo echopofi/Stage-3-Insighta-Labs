@@ -235,6 +235,11 @@ def health_check():
 
 
 # Root-level auth routes for grader compatibility
+@app.get("/auth/github")
+def github_root(request: Request, redirect_uri: Optional[str] = Query(None)):
+    return github_login(request, redirect_uri)
+
+
 @app.get("/auth/github/login")
 def github_login_root(
     request: Request,
@@ -699,6 +704,15 @@ def api_profiles_root(
     user: User = Depends(get_current_user)
 ):
     return get_all_profiles(gender, country_id, age_group, min_age, max_age, sort_by, order, page, limit, db, user)
+
+
+@app.post("/api/profiles")
+async def create_profile_api_root(
+    request: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role("admin"))
+):
+    return await create_profile(request, db, user)
 
 
 @app.get("/api/v1/profiles")
