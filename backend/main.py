@@ -353,7 +353,13 @@ def github_callback(
     if not oauth_state:
         raise HTTPException(status_code=400, detail={"status": "error", "message": "Invalid state"})
     
-    if oauth_state.expires_at < datetime.datetime.now(datetime.timezone.utc):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    if oauth_state.expires_at.tzinfo is None:
+        expires_at = oauth_state.expires_at.replace(tzinfo=datetime.timezone.utc)
+    else:
+        expires_at = oauth_state.expires_at
+    
+    if expires_at < now:
         raise HTTPException(status_code=400, detail={"status": "error", "message": "State expired"})
     
     code_verifier = oauth_state.code_verifier
