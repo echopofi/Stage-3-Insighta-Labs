@@ -363,7 +363,10 @@ def github_callback(
     }
     
     import httpx
-    response = httpx.post(token_url, json=token_data)
+    try:
+        response = httpx.post(token_url, json=token_data, timeout=10)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail={"status": "error", "message": "Failed to exchange code for token"})
     
     if response.status_code != 200:
         raise HTTPException(status_code=400, detail={"status": "error", "message": "Failed to exchange code for token"})
