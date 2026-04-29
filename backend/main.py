@@ -1102,4 +1102,4 @@ if __name__ == "__main__":
 
 
 def handler(request):
-    return app(request)
+    return app(request)\n# v2.0.4 - All auth fixes
