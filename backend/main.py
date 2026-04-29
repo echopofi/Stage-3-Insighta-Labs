@@ -28,7 +28,7 @@ import services
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 30
-RATE_LIMIT_REQUESTS = 100
+RATE_LIMIT_REQUESTS = 10
 RATE_LIMIT_WINDOW_SECONDS = 60
 
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "Ov23liplaceholderclientid")
@@ -237,6 +237,8 @@ def health_check():
 # Root-level auth routes for grader compatibility
 @app.get("/auth/github")
 def github_root(request: Request, redirect_uri: Optional[str] = Query(None)):
+    if not check_rate_limit(request):
+        raise HTTPException(status_code=429, detail={"status": "error", "message": "Rate limit exceeded"})
     return github_login(request, redirect_uri)
 
 
@@ -245,6 +247,8 @@ def github_login_root(
     request: Request,
     redirect_uri: Optional[str] = Query(None)
 ):
+    if not check_rate_limit(request):
+        raise HTTPException(status_code=429, detail={"status": "error", "message": "Rate limit exceeded"})
     return github_login(request, redirect_uri)
 
 
@@ -292,6 +296,8 @@ def github_login(
     request: Request,
     redirect_uri: Optional[str] = Query(None)
 ):
+    if not check_rate_limit(request):
+        raise HTTPException(status_code=429, detail={"status": "error", "message": "Rate limit exceeded"})
     state = secrets.token_urlsafe(32)
     code_verifier = services.generate_code_verifier()
     code_challenge = services.generate_code_challenge(code_verifier)
