@@ -256,12 +256,15 @@ def github_login_root(
 def github_callback_root(
     request: Request,
     code: Optional[str] = Query(None),
-    state: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    state: Optional[str] = Query(None)
 ):
     if not code or not state:
         raise HTTPException(status_code=400, detail={"status": "error", "message": "Missing required parameters"})
-    return github_callback(request, code, state, db)
+    db = SessionLocal()
+    try:
+        return github_callback(request, code, state, db)
+    finally:
+        db.close()
 
 
 @app.post("/auth/refresh")
