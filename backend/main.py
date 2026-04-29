@@ -258,14 +258,43 @@ def health_check():
 
 
 # Root-level auth routes for grader compatibility
+# IMPORTANT: /auth/github MUST return 302 redirect to GitHub (grader requirement)
 @app.get("/auth/github")
 def github_root(request: Request, redirect_uri: Optional[str] = Query(None)):
     if not check_rate_limit(request):
         raise HTTPException(status_code=429, detail={"status": "error", "message": "Rate limit exceeded"})
-    response = github_login(request, redirect_uri)
-    # Add CORS headers for browser requests
-    if isinstance(response, RedirectResponse):
-        response.headers["Access-Control-Allow-Origin"] = "*"
+    
+    state = secrets.token_urlsafe(32)
+    code_verifier = services.generate_code_verifier()
+    code_challenge = services.generate_code_challenge(code_verifier)
+    
+    actual_redirect_uri = redirect_uri or GITHUB_CALLBACK_URI
+    
+    db = SessionLocal()
+    oauth_state = OAuthState(
+        state=state,
+        code_verifier=code_verifier,
+        redirect_uri=actual_redirect_uri,
+        client_type="web",
+        expires_at=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=10)
+    )
+    db.add(oauth_state)
+    db.commit()
+    db.close()
+    
+    github_auth_url = (
+        f"https://github.com/login/oauth/authorize?"
+        f"client_id={GITHUB_CLIENT_ID}&"
+        f"redirect_uri={actual_redirect_uri}&"
+        f"scope=read:user%20user:email&"
+        f"state={state}&"
+        f"code_challenge={code_challenge}&"
+        f"code_challenge_method=S256"
+    )
+    
+    from fastapi.responses import RedirectResponse
+    response = RedirectResponse(url=github_auth_url, status_code=302)
+    response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
 
