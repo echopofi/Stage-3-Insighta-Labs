@@ -255,10 +255,13 @@ def github_login_root(
 @app.get("/auth/github/callback")
 def github_callback_root(
     request: Request,
-    code: str = Query(...),
-    state: str = Query(...)
+    code: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
 ):
-    return github_callback(request, code, state)
+    if not code or not state:
+        raise HTTPException(status_code=400, detail={"status": "error", "message": "Missing required parameters"})
+    return github_callback(request, code, state, db)
 
 
 @app.post("/auth/refresh")
@@ -335,10 +338,13 @@ def github_login(
 @app.get("/api/v1/auth/github/callback")
 def github_callback(
     request: Request,
-    code: str = Query(...),
-    state: str = Query(...),
+    code: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
+    if not code or not state:
+        raise HTTPException(status_code=400, detail={"status": "error", "message": "Missing required parameters"})
+    
     oauth_state = db.query(OAuthState).filter(OAuthState.state == state).first()
     
     if not oauth_state:
