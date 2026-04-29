@@ -1,0 +1,17 @@
+# flyctl launch added from .gitignore
+**/.env
+**/*.db
+**/__pycache__
+**/*.pyc
+**/profiles_export.csv
+**/*.egg-info
+**/.eggs
+**/venv
+**/*.log
+
+# flyctl launch added from backend/.gitignore
+backend/**/.vercel
+
+# flyctl launch added from web/.gitignore
+web/**/.vercel
+fly.toml

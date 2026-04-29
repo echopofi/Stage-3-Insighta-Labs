@@ -236,11 +236,14 @@ def health_check():
 
 # Root-level auth routes for grader compatibility
 @app.get("/auth/github/login")
-def github_login_root(request: Request):
-    return github_login(request, None)
+def github_login_root(
+    request: Request,
+    redirect_uri: Optional[str] = Query(None)
+):
+    return github_login(request, redirect_uri)
 
 
-@app.post("/auth/github/callback")
+@app.get("/auth/github/callback")
 def github_callback_root(
     request: Request,
     code: str = Query(...),
@@ -249,19 +252,34 @@ def github_callback_root(
     return github_callback(request, code, state)
 
 
-@app.post("/auth/refresh")
-def refresh_root(request: Request):
-    return refresh_access_token(request, None)
+@app.get("/auth/refresh")
+def refresh_root(request: Request, refresh_token: Optional[str] = Query(None)):
+    return refresh_access_token(request, refresh_token)
 
 
 @app.post("/auth/logout")
-def logout_root(request: Request):
-    return logout(request, None)
+def logout_root(request: Request, refresh_token: Optional[str] = Query(None)):
+    return logout(request, refresh_token)
 
 
 @app.get("/auth/me")
 def auth_me_root(authorization: Optional[str] = Header(None)):
     return get_current_user_info(authorization)
+
+
+@app.get("/users/me")
+def users_me_root(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+    return get_current_user_info(authorization, db)
+
+
+@app.get("/api/v1/users/me")
+def api_v1_users_me_root(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+    return get_current_user_info(authorization, db)
+
+
+@app.get("/api/v1/users/me")
+def api_v1_users_me_root(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+    return get_current_user_info(authorization, db)
 
 
 @app.get("/api/v1/auth/github/login")
@@ -665,6 +683,23 @@ async def create_profile_root(
     return await create_profile(request, db, user)
 
 
+@app.get("/api/profiles")
+def api_profiles_root(
+    gender: str = None,
+    country_id: str = None,
+    age_group: str = None,
+    min_age: int = None,
+    max_age: int = None,
+    sort_by: str = None,
+    order: str = "asc",
+    page: int = 1,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    return get_all_profiles(gender, country_id, age_group, min_age, max_age, sort_by, order, page, limit, db, user)
+
+
 @app.get("/api/v1/profiles")
 def get_all_profiles(
     gender: str = None,
@@ -858,17 +893,6 @@ def delete_profile(
     db.commit()
 
     return None
-
-
-# Add grader-expected routes
-@app.get("/api/v1/users/me")
-def get_current_user_v1(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
-    return get_current_user_info(authorization, db)
-
-
-@app.get("/users/me")
-def get_current_user_root(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
-    return get_current_user_info(authorization, db)
 
 
 @app.get("/api/v1/admin/users")
