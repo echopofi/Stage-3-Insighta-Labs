@@ -197,4 +197,4 @@ python3 main.py
    ```
    GITHUB_CLIENT_ID=your_client_id
    GITHUB_CLIENT_SECRET=your_client_secret
-   ```
+   ```# v2.0.1 - JWT signing + PKCE redirect fixes
