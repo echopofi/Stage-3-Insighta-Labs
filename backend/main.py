@@ -252,7 +252,7 @@ def github_callback_root(
     return github_callback(request, code, state)
 
 
-@app.get("/auth/refresh")
+@app.post("/auth/refresh")
 def refresh_root(request: Request, refresh_token: Optional[str] = Query(None)):
     return refresh_access_token(request, refresh_token)
 
@@ -446,7 +446,7 @@ def github_callback(
         return response
 
 
-@app.get("/api/v1/auth/refresh")
+@app.post("/api/v1/auth/refresh")
 def refresh_access_token(
     request: Request,
     refresh_token: Optional[str] = Query(None),
